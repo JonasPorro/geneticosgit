@@ -2,6 +2,7 @@ import math
 import random
 import pygame
 import time
+import csv
 
 # Parámetros
 GRID_SIZE = 20
@@ -67,6 +68,8 @@ class Creature:
             if other_creatures:
                 nearest_prey = min(other_creatures, key=lambda c: math.sqrt((self.x - c.x) ** 2 + (self.y - c.y) ** 2))
                 self.move_towards(nearest_prey.x, nearest_prey.y)
+            else:
+                self.move_randomly()
         else:
             # Si no es caníbal, verifica si hay caníbales cerca para huir de ellos
             nearby_carnivores = [c for c in population if c.is_carnivore and c.alive and c.parent_color != self.parent_color]
@@ -82,12 +85,23 @@ class Creature:
                     if food_sources:
                         nearest_food = min(food_sources, key=lambda f: math.sqrt((self.x - f.x) ** 2 + (self.y - f.y) ** 2))
                         self.move_towards(nearest_food.x, nearest_food.y)
+                    else:
+                        self.move_randomly()
             else:
                 # Si no hay caníbales cerca, busca la comida más cercana
                 if food_sources:
                     nearest_food = min(food_sources, key=lambda f: math.sqrt((self.x - f.x) ** 2 + (self.y - f.y) ** 2))
                     self.move_towards(nearest_food.x, nearest_food.y)
+                else:
+                    self.move_randomly()
                     
+    def move_randomly(self):
+        """Mueve la criatura de manera aleatoria."""
+        self.x += random.choice([-1, 1]) * int(self.speed)
+        self.y += random.choice([-1, 1]) * int(self.speed)
+        self.x = max(0, min(self.x, GRID_SIZE - 1))
+        self.y = max(0, min(self.y, GRID_SIZE - 1))
+                        
     def move_away_from(self, threat_x, threat_y):
         """Mueve la criatura en dirección opuesta a una amenaza."""
         direction_x = self.x - threat_x
@@ -192,13 +206,19 @@ def simulate_generation(population, food_sources):
         creature.move(food_sources, population)
         creature.update_slide()
         for food in food_sources:
-            if not creature.is_carnivore and creature.x == food.x and creature.y == food.y:
+            direction_x = creature.x - food.x
+            direction_y = creature.y - food.y
+            distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
+            if not creature.is_carnivore and distance <= creature.size/15: #creature.x == food.x and creature.y == food.y:
                 creature.eat()
                 food_sources.remove(food)
                 break
         for prey in population:
             if creature.is_carnivore and prey.alive and prey.parent_color != creature.parent_color:
-                if creature.x == prey.x and creature.y == prey.y:
+                direction_x = creature.x - prey.x
+                direction_y = creature.y - prey.y
+                distance = math.sqrt(direction_x ** 2 + direction_y ** 2) 
+                if creature.x == prey.x and distance <= creature.size/15: #creature.y == prey.y:
                     creature.eat_prey(prey)
                     break
         creature.update()
@@ -284,6 +304,39 @@ def show_statistics(screen, population):
         screen.blit(font.render(text, True, family[0]), (50, 550 + i * 30))
 
     pygame.display.flip()
+    
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                waiting = False
+
+
+def save_to_csv(population, filename="creatures.csv"):
+    """Guarda la información de todas las criaturas en un archivo CSV, agregando nuevas líneas con cada ejecución."""
+    # Abrir el archivo en modo 'append' para agregar nuevas líneas en cada simulación.
+    with open(filename, "a", newline="") as csvfile:
+        fieldnames = ["id", "color", "size", "speed", "time_alive", "food_eaten_total", "reproductions", "is_carnivore"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        # Escribir el encabezado solo si el archivo está vacío
+        csvfile.seek(0)
+        if csvfile.tell() == 0:
+            writer.writeheader()
+        
+        # Escribir la información de las criaturas
+        for creature in population:
+            writer.writerow({
+                "id": creature.id,
+                "color": creature.parent_color,
+                "size": creature.size,
+                "speed": round(creature.speed, 2),
+                "time_alive": round(creature.time_alive, 2),
+                "food_eaten_total": creature.food_eaten_total,
+                "reproductions": creature.reproductions,
+                "is_carnivore": creature.is_carnivore
+            })
+
 
 def run_simulation():
     """Corre la simulación por varias generaciones."""
@@ -323,9 +376,9 @@ def run_simulation():
             print("¡Toda la población murió!")
             break
 
+    save_to_csv(all_creatures)
     # Mostrar estadísticas de todas las criaturas
     show_statistics(screen, all_creatures)
-    pygame.time.wait(10000)  # Mostrar estadísticas por 10 segundos
     pygame.quit()
 
 if __name__ == "__main__":
