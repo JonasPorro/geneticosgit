@@ -3,6 +3,7 @@ import random
 import pygame
 import time
 import csv
+import webcolors
 
 # Parámetros
 GRID_SIZE = 20
@@ -50,8 +51,6 @@ class Creature:
         self.is_carnivore = is_carnivore if is_carnivore is not None else random.choice([True, False])
         self.target_x = self.x
         self.target_y = self.y
-        self.smooth_steps = 1
-        self.current_step = 0
 
     def random_color(self):
         """Genera un color aleatorio para la criatura."""
@@ -110,13 +109,12 @@ class Creature:
 
         if distance != 0:
             # Calcula la nueva posición alejándose de la amenaza
-            self.target_x = self.x + int(self.speed * (direction_x / distance))
-            self.target_y = self.y + int(self.speed * (direction_y / distance))
+            self.x += int(self.speed * (direction_x / distance))
+            self.y += int(self.speed * (direction_y / distance))
 
-        # Ajustar para mantener dentro de los límites del GRID
-        self.target_x = max(0, min(self.target_x, GRID_SIZE - 1))
-        self.target_y = max(0, min(self.target_y, GRID_SIZE - 1))
-        self.current_step = 0
+        # Asegurar que se mantenga dentro de los límites de la cuadrícula
+        self.x = max(0, min(self.x, GRID_SIZE - 1))
+        self.y = max(0, min(self.y, GRID_SIZE - 1))
 
     def move_towards(self, target_x, target_y):
         """Calcula el movimiento hacia un objetivo específico."""
@@ -124,27 +122,11 @@ class Creature:
         direction_y = target_y - self.y
         distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
 
-        if distance <= self.speed:
-            self.target_x = target_x
-            self.target_y = target_y
-        else:
-            self.target_x = self.x + int(self.speed * (direction_x / distance))
-            self.target_y = self.y + int(self.speed * (direction_y / distance))
-
-        self.target_x = max(0, min(self.target_x, GRID_SIZE - 1))
-        self.target_y = max(0, min(self.target_y, GRID_SIZE - 1))
-        self.current_step = 0
-
-    def update_slide(self):
-        """Actualiza la posición de la criatura para un deslizamiento suave."""
-        if self.current_step < self.smooth_steps:
-            fraction = (self.current_step + 1) / self.smooth_steps
-            self.x = int(self.x * (1 - fraction) + self.target_x * fraction)
-            self.y = int(self.y * (1 - fraction) + self.target_y * fraction)
-            self.current_step += 1
-        else:
-            self.x = self.target_x
-            self.y = self.target_y
+        if distance > 0:
+            self.x += int(self.speed * (direction_x / distance))
+            self.y += int(self.speed * (direction_y / distance))
+        self.x = max(0, min(self.x, GRID_SIZE - 1))
+        self.y = max(0, min(self.y, GRID_SIZE - 1))
 
     def eat(self):
         """Acción de comer si encuentra comida o a una presa."""
@@ -204,7 +186,6 @@ def simulate_generation(population, food_sources):
         if not creature.alive:
             continue
         creature.move(food_sources, population)
-        creature.update_slide()
         for food in food_sources:
             direction_x = creature.x - food.x
             direction_y = creature.y - food.y
@@ -271,7 +252,7 @@ def show_statistics(screen, population):
             for creature2 in population:
                 if creature2.parent_color == creature.parent_color:
                     occurences += 1
-            top_families.append((creature.parent_color, occurences))
+            top_families.append((get_colour_name(creature.parent_color), occurences))
         
     top_families = sorted(top_families, key=lambda x:x[1], reverse=True)[:3]
     
@@ -312,7 +293,7 @@ def show_statistics(screen, population):
                 waiting = False
 
 
-def save_to_csv(population, filename="creatures.csv"):
+def save_to_csv(population, index, filename="creatures.csv"):
     """Guarda la información de todas las criaturas en un archivo CSV, agregando nuevas líneas con cada ejecución."""
     # Abrir el archivo en modo 'append' para agregar nuevas líneas en cada simulación.
     with open(filename, "a", newline="") as csvfile:
@@ -327,8 +308,8 @@ def save_to_csv(population, filename="creatures.csv"):
         # Escribir la información de las criaturas
         for creature in population:
             writer.writerow({
-                "id": creature.id,
-                "color": creature.parent_color,
+                "id": str(index) +"_"+ str(creature.id),
+                "color": get_colour_name(creature.parent_color),
                 "size": creature.size,
                 "speed": round(creature.speed, 2),
                 "time_alive": round(creature.time_alive, 2),
@@ -336,9 +317,176 @@ def save_to_csv(population, filename="creatures.csv"):
                 "reproductions": creature.reproductions,
                 "is_carnivore": creature.is_carnivore
             })
+            
+def closest_colour(requested_colour):
+    myColors = {
+        "AliceBlue":"#F0F8FF",
+        "AntiqueWhite":"#FAEBD7",
+        "Aqua":"#00FFFF",
+        "Aquamarine":"#7FFFD4",
+        "Azure":"#F0FFFF",
+        "Beige":"#F5F5DC",
+        "Bisque":"#FFE4C4",
+        "Black":"#000000",
+        "BlanchedAlmond":"#FFEBCD",
+        "Blue":"#0000FF",
+        "BlueViolet":"#8A2BE2",
+        "Brown":"#A52A2A",
+        "BurlyWood":"#DEB887",
+        "CadetBlue":"#5F9EA0",
+        "Chartreuse":"#7FFF00",
+        "Chocolate":"#D2691E",
+        "Coral":"#FF7F50",
+        "CornflowerBlue":"#6495ED",
+        "Cornsilk":"#FFF8DC",
+        "Crimson":"#DC143C",
+        "Cyan":"#00FFFF",
+        "DarkBlue":"#00008B",
+        "DarkCyan":"#008B8B",
+        "DarkGoldenRod":"#B8860B",
+        "DarkGray":"#A9A9A9",
+        "DarkGrey":"#A9A9A9",
+        "DarkGreen":"#006400",
+        "DarkKhaki":"#BDB76B",
+        "DarkMagenta":"#8B008B",
+        "DarkOliveGreen":"#556B2F",
+        "DarkOrange":"#FF8C00",
+        "DarkOrchid":"#9932CC",
+        "DarkRed":"#8B0000",
+        "DarkSalmon":"#E9967A",
+        "DarkSeaGreen":"#8FBC8F",
+        "DarkSlateBlue":"#483D8B",
+        "DarkSlateGray":"#2F4F4F",
+        "DarkSlateGrey":"#2F4F4F",
+        "DarkTurquoise":"#00CED1",
+        "DarkViolet":"#9400D3",
+        "DeepPink":"#FF1493",
+        "DeepSkyBlue":"#00BFFF",
+        "DimGray":"#696969",
+        "DimGrey":"#696969",
+        "DodgerBlue":"#1E90FF",
+        "FireBrick":"#B22222",
+        "FloralWhite":"#FFFAF0",
+        "ForestGreen":"#228B22",
+        "Fuchsia":"#FF00FF",
+        "Gainsboro":"#DCDCDC",
+        "GhostWhite":"#F8F8FF",
+        "Gold":"#FFD700",
+        "GoldenRod":"#DAA520",
+        "Gray":"#808080",
+        "Grey":"#808080",
+        "Green":"#008000",
+        "GreenYellow":"#ADFF2F",
+        "HoneyDew":"#F0FFF0",
+        "HotPink":"#FF69B4",
+        "IndianRed ":"#CD5C5C",
+        "Indigo ":"#4B0082",
+        "Ivory":"#FFFFF0",
+        "Khaki":"#F0E68C",
+        "Lavender":"#E6E6FA",
+        "LavenderBlush":"#FFF0F5",
+        "LawnGreen":"#7CFC00",
+        "LemonChiffon":"#FFFACD",
+        "LightBlue":"#ADD8E6",
+        "LightCoral":"#F08080",
+        "LightCyan":"#E0FFFF",
+        "LightGoldenRodYellow":"#FAFAD2",
+        "LightGray":"#D3D3D3",
+        "LightGrey":"#D3D3D3",
+        "LightGreen":"#90EE90",
+        "LightPink":"#FFB6C1",
+        "LightSalmon":"#FFA07A",
+        "LightSeaGreen":"#20B2AA",
+        "LightSkyBlue":"#87CEFA",
+        "LightSlateGray":"#778899",
+        "LightSlateGrey":"#778899",
+        "LightSteelBlue":"#B0C4DE",
+        "LightYellow":"#FFFFE0",
+        "Lime":"#00FF00",
+        "LimeGreen":"#32CD32",
+        "Linen":"#FAF0E6",
+        "Magenta":"#FF00FF",
+        "Maroon":"#800000",
+        "MediumAquaMarine":"#66CDAA",
+        "MediumBlue":"#0000CD",
+        "MediumOrchid":"#BA55D3",
+        "MediumPurple":"#9370DB",
+        "MediumSeaGreen":"#3CB371",
+        "MediumSlateBlue":"#7B68EE",
+        "MediumSpringGreen":"#00FA9A",
+        "MediumTurquoise":"#48D1CC",
+        "MediumVioletRed":"#C71585",
+        "MidnightBlue":"#191970",
+        "MintCream":"#F5FFFA",
+        "MistyRose":"#FFE4E1",
+        "Moccasin":"#FFE4B5",
+        "NavajoWhite":"#FFDEAD",
+        "Navy":"#000080",
+        "OldLace":"#FDF5E6",
+        "Olive":"#808000",
+        "OliveDrab":"#6B8E23",
+        "Orange":"#FFA500",
+        "OrangeRed":"#FF4500",
+        "Orchid":"#DA70D6",
+        "PaleGoldenRod":"#EEE8AA",
+        "PaleGreen":"#98FB98",
+        "PaleTurquoise":"#AFEEEE",
+        "PaleVioletRed":"#DB7093",
+        "PapayaWhip":"#FFEFD5",
+        "PeachPuff":"#FFDAB9",
+        "Peru":"#CD853F",
+        "Pink":"#FFC0CB",
+        "Plum":"#DDA0DD",
+        "PowderBlue":"#B0E0E6",
+        "Purple":"#800080",
+        "RebeccaPurple":"#663399",
+        "Red":"#FF0000",
+        "RosyBrown":"#BC8F8F",
+        "RoyalBlue":"#041690",
+        "SaddleBrown":"#8B4513",
+        "Salmon":"#FA8072",
+        "SandyBrown":"#F4A460",
+        "SeaGreen":"#2E8B57",
+        "SeaShell":"#FFF5EE",
+        "Sienna":"#A0522D",
+        "Silver":"#C0C0C0",
+        "SkyBlue":"#87CEEB",
+        "SlateBlue":"#6A5ACD",
+        "SlateGray":"#708090",
+        "SlateGrey":"#708090",
+        "Snow":"#FFFAFA",
+        "SpringGreen":"#00FF7F",
+        "SteelBlue":"#4682B4",
+        "Tan":"#D2B48C",
+        "Teal":"#008080",
+        "Thistle":"#D8BFD8",
+        "Tomato":"#FF6347",
+        "Turquoise":"#40E0D0",
+        "Violet":"#EE82EE",
+        "Wheat":"#F5DEB3",
+        "White":"#FFFFFF",
+        "WhiteSmoke":"#F5F5F5",
+        "Yellow":"#FFFF00",
+        "YellowGreen":"#9ACD32"
+    }
+    
+    min_colours = {}
+    for name, key in myColors.items():
+        r_c, g_c, b_c = webcolors.hex_to_rgb(key)
+        rd = (r_c - requested_colour[0]) ** 2
+        gd = (g_c - requested_colour[1]) ** 2
+        bd = (b_c - requested_colour[2]) ** 2
+        min_colours[(rd + gd + bd)] = name
+    return min_colours[min(min_colours.keys())]
 
+def get_colour_name(requested_colour):
+    try:
+        closest_name = webcolors.rgb_to_name(requested_colour)
+    except ValueError:
+        closest_name = closest_colour(requested_colour)
+    return closest_name
 
-def run_simulation():
+def run_simulation(index):
     """Corre la simulación por varias generaciones."""
     screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
     pygame.display.set_caption("Simulación de Criaturas")
@@ -376,10 +524,10 @@ def run_simulation():
             print("¡Toda la población murió!")
             break
 
-    save_to_csv(all_creatures)
+    #save_to_csv(all_creatures,index)
     # Mostrar estadísticas de todas las criaturas
     show_statistics(screen, all_creatures)
     pygame.quit()
 
 if __name__ == "__main__":
-    run_simulation()
+    run_simulation(13)
