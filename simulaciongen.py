@@ -1,9 +1,12 @@
 import math
+import os
 import random
 import pygame
 import time
 import csv
 import webcolors
+
+
 
 # Parámetros
 GRID_SIZE = 20
@@ -28,6 +31,108 @@ font = pygame.font.Font(None, 30)  # Fuente para dibujar los números
 font_large = pygame.font.Font(None, 36)  # Fuente más grande para las estadísticas
 dead_creatures = 0
 
+def show_initial_screen():
+    screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
+    pygame.display.set_caption("Configuración Inicial")
+
+    # Colores y fuentes
+    font = pygame.font.Font(None, 36)
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
+    
+    # Parámetros y valores por defecto
+    params = {
+        "Presiona Enter para iniciar, o flechas para ajustar valores.": 0,
+        "population_size": 10,
+        "carnivore_percentage": 20,
+        "initial_food": 20,
+        "size_min": 10,
+        "size_max": 35,
+        "speed_min": 1.0,
+        "speed_max": 4.0,
+        "save_csv": True
+    }
+    random_carnivore = False
+
+    # Loop de configuración
+    selected_option = 1
+    options_keys = list(params.keys())
+
+    while True:
+        screen.fill(WHITE)
+        
+        # Mostrar opciones
+        options_text = [
+            "Presiona Enter para iniciar, o flechas para ajustar valores.",
+            f"Tamaño de Población: {params['population_size']}",
+            f"% Carnívoros: {params['carnivore_percentage']} {'(Aleatorio)' if random_carnivore else ''}",
+            f"Comida inicial: {params['initial_food']}",
+            f"Tamaño mínimo: {params['size_min']}",
+            f"Tamaño máximo: {params['size_max']}",
+            f"Velocidad mínima: {params['speed_min']}",
+            f"Velocidad máxima: {params['speed_max']}",
+            f"Guardar CSV: {'Sí' if params['save_csv'] else 'No'}"
+        ]
+        
+        for i, text in enumerate(options_text):
+            color = BLACK if i != selected_option else (255, 0, 0)
+            screen.blit(font.render(text, True, color), (50, 50 + i * 40))
+        
+        pygame.display.flip()
+        
+        # Eventos para cambiar valores
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return params, random_carnivore
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return params, random_carnivore
+                elif event.key == pygame.K_DOWN:
+                    selected_option = (selected_option + 1) % len(options_keys)
+                elif event.key == pygame.K_UP:
+                    selected_option = (selected_option - 1) % len(options_keys)
+                elif event.key == pygame.K_RIGHT:
+                    option = options_keys[selected_option]
+                    if option == "population_size":
+                        params["population_size"] += 5
+                    elif option == "carnivore_percentage":
+                        params["carnivore_percentage"] = min(100, params["carnivore_percentage"] + 5)
+                    elif option == "initial_food":
+                        params["initial_food"] = min(100, params["initial_food"] + 1)
+                    elif option == "size_min":
+                        params["size_min"] = max(1, params["size_min"] + 1)
+                    elif option == "size_max":
+                        params["size_max"] = min(100, params["size_max"] + 1)
+                    elif option == "speed_min":
+                        params["speed_min"] = max(1, params["speed_min"] + 1)
+                    elif option == "speed_max":
+                        params["speed_max"] = min(10.0, params["speed_max"] + 1)
+                    elif option == "save_csv":
+                        params["save_csv"] = not params["save_csv"]
+                    elif option == "carnivore_percentage":
+                        random_carnivore = not random_carnivore
+                elif event.key == pygame.K_LEFT:
+                    option = options_keys[selected_option]
+                    if option == "population_size":
+                        params["population_size"] = max(5, params["population_size"] - 5)
+                    elif option == "carnivore_percentage":
+                        params["carnivore_percentage"] = max(0, params["carnivore_percentage"] - 5)
+                    elif option == "initial_food":
+                        params["initial_food"] = max(1, params["initial_food"] - 1)
+                    elif option == "size_min":
+                        params["size_min"] = max(1, params["size_min"] - 1)
+                    elif option == "size_max":
+                        params["size_max"] = max(params["size_min"], params["size_max"] - 1)
+                    elif option == "speed_min":
+                        params["speed_min"] = max(1, params["speed_min"] - 1)
+                    elif option == "speed_max":
+                        params["speed_max"] = max(params["speed_min"], params["speed_max"] - 1)
+                    elif option == "save_csv":
+                        params["save_csv"] = not params["save_csv"]
+                    elif option == "carnivore_percentage":
+                        random_carnivore = not random_carnivore
+
 class Creature:
     unique_id = 0  # Variable de clase para asignar IDs únicos a las criaturas
 
@@ -46,7 +151,7 @@ class Creature:
         self.x = random.randint(0, GRID_SIZE - 1)
         self.y = random.randint(0, GRID_SIZE - 1)
         self.parent_color = parent_color if parent_color else self.random_color()
-        self.size = size if size is not None else random.randint(10, 40)  # Tamaño aleatorio entre 5 y 20
+        self.size = size if size is not None else random.randint(10, 35)  # Tamaño aleatorio entre 5 y 20
         self.speed = speed if speed is not None else 40 / self.size  # Velocidad inversamente proporcional al tamaño
         self.is_carnivore = is_carnivore if is_carnivore is not None else random.choice([True, False])
         self.target_x = self.x
@@ -121,15 +226,19 @@ class Creature:
         direction_x = target_x - self.x
         direction_y = target_y - self.y
         distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
-
-        if distance > 0:
+        
+        if distance < self.speed:
+            self.x = target_x
+            self.y = target_y
+        elif distance > 0:
             self.x += int(self.speed * (direction_x / distance))
             self.y += int(self.speed * (direction_y / distance))
+            
         self.x = max(0, min(self.x, GRID_SIZE - 1))
         self.y = max(0, min(self.y, GRID_SIZE - 1))
 
     def eat(self):
-        """Acción de comer si encuentra comida o a una presa."""
+        """Acción de comer si encuentra comida."""
         self.food_eaten += 1
         self.eat_time = time.time()
 
@@ -168,9 +277,20 @@ class Food:
         self.x = random.randint(0, GRID_SIZE - 1)
         self.y = random.randint(0, GRID_SIZE - 1)
 
-def create_population(size):
-    """Crea una población inicial."""
-    return [Creature() for _ in range(size)]
+def create_population(size, params):
+    """Crea una población inicial con los parámetros configurados."""
+    population = []
+    carnivores = 0
+    for _ in range(size):
+        csize = random.randint(params["size_min"], params["size_max"])
+        speed = random.randint(params["speed_min"], params["speed_max"])
+        if carnivores < size * params["carnivore_percentage"] / 100:
+            is_carnivore = True
+            carnivores += 1
+        else:
+            is_carnivore = False
+        population.append(Creature(size=csize, speed=speed, is_carnivore=is_carnivore))
+    return population
 
 def create_food(amount=MAX_FOOD):
     """Crea una lista de comida aleatoria."""
@@ -252,7 +372,7 @@ def show_statistics(screen, population):
             for creature2 in population:
                 if creature2.parent_color == creature.parent_color:
                     occurences += 1
-            top_families.append((get_colour_name(creature.parent_color), occurences))
+            top_families.append((creature.parent_color, occurences))
         
     top_families = sorted(top_families, key=lambda x:x[1], reverse=True)[:3]
     
@@ -281,28 +401,49 @@ def show_statistics(screen, population):
 
     # Top 3 familias
     for i, family in enumerate(top_families):
-        text = f"Familia {family[0]} - Integrantes totales: {family[1]}"
+        text = f"Familia {get_colour_name(family[0])} - Integrantes totales: {family[1]}"
         screen.blit(font.render(text, True, family[0]), (50, 550 + i * 30))
 
+     # Botón para Volver al Menú Inicial
+    button_rect = pygame.Rect((SCREEN_SIZE // 2 - 100, SCREEN_SIZE - 100, 200, 50))
+    pygame.draw.rect(screen, RED, button_rect)
+    button_text = font_large.render("Reiniciar Simulación", True, WHITE)
+    screen.blit(button_text, (button_rect.x + 10, button_rect.y + 10))
+
     pygame.display.flip()
-    
+
+    # Detectar clic en el botón
     waiting = True
     while waiting:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if button_rect.collidepoint(event.pos):
+                    waiting = False  # Salir del bucle para volver al menú inicial
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 waiting = False
+                    
 
 
-def save_to_csv(population, index, filename="creatures.csv"):
+def save_to_csv(population, filename="creatures.csv"):
     """Guarda la información de todas las criaturas en un archivo CSV, agregando nuevas líneas con cada ejecución."""
+    # Abro el archivo index para obtener el último numero único de ejecución para luego utilizarlo para almacenar los id.
+    with open("index.txt", "r") as file:
+        index = int(file.read().strip())  # Convierte el texto a un entero
+    
+    # Guardo el siguiente índice.    
+    with open("index.txt", "w") as file:
+        file.write(str(index + 1))
+    
     # Abrir el archivo en modo 'append' para agregar nuevas líneas en cada simulación.
     with open(filename, "a", newline="") as csvfile:
         fieldnames = ["id", "color", "size", "speed", "time_alive", "food_eaten_total", "reproductions", "is_carnivore"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         
         # Escribir el encabezado solo si el archivo está vacío
-        csvfile.seek(0)
-        if csvfile.tell() == 0:
+        if os.path.getsize(filename) == 0:
             writer.writeheader()
         
         # Escribir la información de las criaturas
@@ -486,19 +627,22 @@ def get_colour_name(requested_colour):
         closest_name = closest_colour(requested_colour)
     return closest_name
 
-def run_simulation(index):
-    """Corre la simulación por varias generaciones."""
-    screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
-    pygame.display.set_caption("Simulación de Criaturas")
+def run_simulation():
+    while(True):
+        """Corre la simulación por varias generaciones."""
+        params, random_carnivore = show_initial_screen()
+        POPULATION_SIZE = params["population_size"]
+        CARNIVORE_PERCENTAGE = random.randint(0, 100) if random_carnivore else params["carnivore_percentage"]
+        screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
+        pygame.display.set_caption("Simulación de Criaturas")
 
-    population = create_population(POPULATION_SIZE)
-    all_creatures = population.copy()  # Mantener un registro de todas las criaturas
-    food_sources = create_food()
-    clock = pygame.time.Clock()
-    last_food_time = pygame.time.get_ticks()
-
-    for generation in range(GENERATIONS):
-        print(f"\nGeneración {generation + 1}")
+        population = create_population(POPULATION_SIZE, params)
+        all_creatures = population.copy()  # Mantener un registro de todas las criaturas
+        food_sources = create_food(params["initial_food"])
+        clock = pygame.time.Clock()
+        last_food_time = pygame.time.get_ticks()
+        global dead_creatures
+        dead_creatures = 0
 
         # Simular generación
         while len(food_sources) > 0 and len(population) > dead_creatures:
@@ -522,12 +666,12 @@ def run_simulation(index):
 
         if not population:
             print("¡Toda la población murió!")
-            break
 
-    #save_to_csv(all_creatures,index)
-    # Mostrar estadísticas de todas las criaturas
-    show_statistics(screen, all_creatures)
-    pygame.quit()
+        if params["save_csv"]:
+            save_to_csv(all_creatures)
+            
+        # Mostrar estadísticas de todas las criaturas
+        show_statistics(screen, all_creatures)
 
 if __name__ == "__main__":
-    run_simulation(13)
+    run_simulation()
