@@ -76,7 +76,10 @@ def show_initial_screen():
         
         for i, text in enumerate(options_text):
             color = BLACK if i != selected_option else (255, 0, 0)
-            screen.blit(font.render(text, True, color), (50, 50 + i * 40))
+            if i == 0:
+                screen.blit(font_large.render(text, True, color), (150, 150 + i * 40))
+            else:
+                screen.blit(font.render(text, True, color), (150, 200 + i * 40))
         
         pygame.display.flip()
         
@@ -627,6 +630,14 @@ def get_colour_name(requested_colour):
         closest_name = closest_colour(requested_colour)
     return closest_name
 
+def count_alive_carnivores(population):
+    carnivores = 0
+    for creature in population:
+        if creature.is_carnivore and creature.alive:
+            carnivores += 1
+    return carnivores
+            
+
 def run_simulation():
     while(True):
         """Corre la simulación por varias generaciones."""
@@ -645,7 +656,7 @@ def run_simulation():
         dead_creatures = 0
 
         # Simular generación
-        while len(food_sources) > 0 and len(population) > dead_creatures:
+        while (len(food_sources) > 0 or count_alive_carnivores(population) > 0)and len(population) > dead_creatures:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -664,7 +675,7 @@ def run_simulation():
             all_creatures.extend(new_population)  # Agregar nuevas criaturas a la lista completa
             population.extend(new_population)
 
-        if not population:
+        if len(population) <= dead_creatures:
             print("¡Toda la población murió!")
 
         if params["save_csv"]:
