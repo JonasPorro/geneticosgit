@@ -20,6 +20,7 @@ RED = (255, 0, 0)  # Color para los caníbales
 
 # Inicializar pygame
 pygame.init()
-font = pygame.font.Font(None, 30)  # Fuente para dibujar los números
-font_large = pygame.font.Font(None, 36)  # Fuente más grande para las estadísticas
+font = pygame.font.Font(None, 25)  # Fuente para dibujar los números
+font_large = pygame.font.Font(None, 30)  # Fuente más grande para las estadísticas
+font_huge = pygame.font.Font(None, 50)  # Fuente más grande para las estadísticas
 dead_creatures = 0

@@ -29,7 +29,7 @@ def create_population(size, params):
             carnivores += 1
         else:
             is_carnivore = False
-        population.append(Creature(size=csize, speed=speed, is_carnivore=is_carnivore))
+        population.append(Creature(size=csize, speed=speed, is_carnivore=is_carnivore, personality=random.choice(["egoista", "conservadora", "neutral"])))
     return population
 
 def create_food(amount=MAX_FOOD):
@@ -37,7 +37,7 @@ def create_food(amount=MAX_FOOD):
     return [Food() for _ in range(amount)]
 
 def add_food(food_sources, amount=2):
-    """Agrega nueva comida cada cierto intervalo."""
+    """Agrega nueva comida a la lista."""
     food_sources.extend(create_food(amount))
 
 def simulate_generation(population, food_sources):
@@ -88,7 +88,7 @@ def save_to_csv(population, filename="creatures.csv"):
     
     # Abrir el archivo en modo 'append' para agregar nuevas líneas en cada simulación.
     with open(filename, "a", newline="") as csvfile:
-        fieldnames = ["id", "color", "size", "speed", "time_alive", "food_eaten_total", "reproductions", "is_carnivore"]
+        fieldnames = ["id", "color", "size", "speed", "time_alive", "food_eaten_total", "reproductions", "is_carnivore", "personality"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         
         # Escribir el encabezado solo si el archivo está vacío
@@ -105,8 +105,32 @@ def save_to_csv(population, filename="creatures.csv"):
                 "time_alive": round(creature.time_alive, 2),
                 "food_eaten_total": creature.food_eaten_total,
                 "reproductions": creature.reproductions,
-                "is_carnivore": creature.is_carnivore
+                "is_carnivore": creature.is_carnivore,
+                "personality": creature.personality
             })
+
+def generate_tmp_csv(population, filename="creaturestmp.csv"):
+    """Guarda la información de todas las criaturas en un archivo CSV, agregando nuevas líneas con cada ejecución."""
+    # Abrir el archivo en modo 'write' para sobreescribir en cada simulación.
+    with open(filename, "w", newline="") as csvfile:
+        fieldnames = ["id", "family", "size", "speed", "time_alive", "food_eaten_total", "reproductions", "is_carnivore", "personality"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        # Escribir la información de las criaturas
+        for creature in population:
+            writer.writerow({
+                "id": creature.id,
+                "family": get_colour_name(creature.parent_color),
+                "size": creature.size,
+                "speed": round(creature.speed, 2),
+                "time_alive": round(creature.time_alive, 2),
+                "food_eaten_total": creature.food_eaten_total,
+                "reproductions": creature.reproductions,
+                "is_carnivore": creature.is_carnivore,
+                "personality": creature.personality
+            })
+    
             
 def count_alive_carnivores(population):
     carnivores = 0
@@ -118,10 +142,9 @@ def count_alive_carnivores(population):
 
 def run_simulation():
     while(True):
-        """Corre la simulación por varias generaciones."""
+        """Corre la simulación."""
         params, random_carnivore = show_initial_screen()
         POPULATION_SIZE = params["population_size"]
-        CARNIVORE_PERCENTAGE = random.randint(0, 100) if random_carnivore else params["carnivore_percentage"]
         screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
         pygame.display.set_caption("Simulación de Criaturas")
 
@@ -132,13 +155,17 @@ def run_simulation():
         last_food_time = pygame.time.get_ticks()
         global dead_creatures
         dead_creatures = 0
+        stop = False
 
         # Simular generación
-        while (len(food_sources) > 0 or count_alive_carnivores(population) > 0)and len(population) > dead_creatures:
+        while (len(food_sources) > 0 or count_alive_carnivores(population) > 0) and len(population) > dead_creatures and not stop:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     return
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    print("Simulación detenida por el usuario.")
+                    stop = True
 
             if pygame.time.get_ticks() - last_food_time > NEW_FOOD_INTERVAL:
                 add_food(food_sources, amount=2)
@@ -158,7 +185,9 @@ def run_simulation():
 
         if params["save_csv"]:
             save_to_csv(all_creatures)
-            
+        
+        generate_tmp_csv(all_creatures)
+        
         # Mostrar estadísticas de todas las criaturas
         show_statistics(screen, all_creatures)
 

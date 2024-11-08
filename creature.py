@@ -7,7 +7,7 @@ from config import GRID_SIZE, TIME_TO_LIVE, REPRODUCTION_THRESHOLD
 class Creature:
     unique_id = 0  # Variable de clase para asignar IDs únicos a las criaturas
 
-    def __init__(self, parent_color=None, speed=None, size=None, is_carnivore=None):
+    def __init__(self, parent_color=None, speed=None, size=None, is_carnivore=None, personality = "neutral"):
         Creature.unique_id += 1
         self.id = Creature.unique_id
         self.energy = 100
@@ -27,6 +27,7 @@ class Creature:
         self.is_carnivore = is_carnivore if is_carnivore is not None else random.choice([True, False])
         self.target_x = self.x
         self.target_y = self.y
+        self.personality = personality 
 
     def random_color(self):
         """Genera un color aleatorio para la criatura."""
@@ -41,35 +42,60 @@ class Creature:
             # Si es caníbal, busca la criatura más cercana que no sea de su familia
             other_creatures = [c for c in population if c.alive and c.parent_color != self.parent_color]
             if other_creatures:
-                nearest_prey = min(other_creatures, key=lambda c: math.sqrt((self.x - c.x) ** 2 + (self.y - c.y) ** 2))
-                self.move_towards(nearest_prey.x, nearest_prey.y)
+                nearest_prey = min(other_creatures, key=lambda c: self._distance_to(c))
+                if self.personality == "egoista" or (self.personality == "conservadora" and self._evaluate_resources(food_sources, population)) or (self.personality == "neutral" and random.choice([True,False])):
+                    self.move_towards(nearest_prey.x, nearest_prey.y)
+                else:
+                    self.move_randomly()
             else:
                 self.move_randomly()
         else:
             # Si no es caníbal, verifica si hay caníbales cerca para huir de ellos
             nearby_carnivores = [c for c in population if c.is_carnivore and c.alive and c.parent_color != self.parent_color]
             if nearby_carnivores:
-                nearest_carnivore = min(nearby_carnivores, key=lambda c: math.sqrt((self.x - c.x) ** 2 + (self.y - c.y) ** 2))
-                distance_to_carnivore = math.sqrt((self.x - nearest_carnivore.x) ** 2 + (self.y - nearest_carnivore.y) ** 2)
-
+                nearest_carnivore = min(nearby_carnivores, key=lambda c: self._distance_to(c))
+                distance_to_carnivore = self._distance_to(nearest_carnivore)
+                
                 # Si el caníbal está lo suficientemente cerca, la criatura huye en dirección opuesta
                 if distance_to_carnivore < 5:  # Ajusta este valor según el rango de detección
                     self.move_away_from(nearest_carnivore.x, nearest_carnivore.y)
                 else:
                     # Si no hay un caníbal cerca, busca la comida más cercana
                     if food_sources:
-                        nearest_food = min(food_sources, key=lambda f: math.sqrt((self.x - f.x) ** 2 + (self.y - f.y) ** 2))
-                        self.move_towards(nearest_food.x, nearest_food.y)
+                        if self.personality == "egoista" or (self.personality == "conservadora" and self._evaluate_resources(food_sources, population)) or (self.personality == "neutral" and random.choice([True,False])):
+                            nearest_food = min(food_sources, key=lambda f: self._distance_to(f))
+                            self.move_towards(nearest_food.x, nearest_food.y)
+                        else:
+                            self.move_randomly()
                     else:
                         self.move_randomly()
             else:
                 # Si no hay caníbales cerca, busca la comida más cercana
                 if food_sources:
-                    nearest_food = min(food_sources, key=lambda f: math.sqrt((self.x - f.x) ** 2 + (self.y - f.y) ** 2))
-                    self.move_towards(nearest_food.x, nearest_food.y)
+                        if self.personality == "egoista" or (self.personality == "conservadora" and self._evaluate_resources(food_sources, population)) or (self.personality == "neutral" and random.choice([True,False])):
+                            nearest_food = min(food_sources, key=lambda f: self._distance_to(f))
+                            self.move_towards(nearest_food.x, nearest_food.y)
+                        else:
+                            self.move_randomly()
                 else:
                     self.move_randomly()
                     
+    def _evaluate_resources(self, food_sources, population):
+        """Evalúa los recursos en el entorno considerando el tipo de criatura."""
+        if not self.is_carnivore:
+            # Herbívoro: cuenta comida y otros herbívoros cercanos
+            nearby_food = len(food_sources)
+            nearby_herbivores = sum(1 for creature in population if not creature.is_carnivore and creature.alive and creature.parent_color == self.parent_color)
+            return nearby_food > nearby_herbivores
+        else:
+            # Carnívoro: cuenta presas (herbívoros) cercanos
+            nearby_prey = sum(1 for creature in population if not creature.is_carnivore and creature.alive)
+            return nearby_prey > 2  # Sigue cazando solo si hay más de dos presas
+        
+    def _distance_to(self, obj):
+        """Calcula la distancia a otro objeto (alimento o criatura)."""
+        return math.sqrt((self.x - obj.x) ** 2 + (self.y - obj.y) ** 2)
+                
     def move_randomly(self):
         """Mueve la criatura de manera aleatoria."""
         self.x += random.choice([-1, 1]) * int(self.speed)
@@ -130,7 +156,7 @@ class Creature:
         self.reproductions += 1
         self.food_eaten_total += self.food_eaten
         self.food_eaten = 0
-        return Creature(self.parent_color, speed=self.speed, size=self.size, is_carnivore=self.is_carnivore)
+        return Creature(self.parent_color, speed=self.speed, size=self.size, is_carnivore=self.is_carnivore, personality=self.personality)
 
     def update(self):
         """Verifica si la criatura sigue viva."""

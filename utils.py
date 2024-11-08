@@ -167,3 +167,14 @@ def get_colour_name(requested_colour):
     except ValueError:
         closest_name = closest_colour(requested_colour)
     return closest_name
+
+def divide_text(texto, max_palabras=10):
+    palabras = texto.split()  # Divide el texto en palabras
+    fragmentos = []
+    
+    # Recorre las palabras en bloques de `max_palabras`
+    for i in range(0, len(palabras), max_palabras):
+        fragmento = " ".join(palabras[i:i + max_palabras])  # Une las palabras en un string
+        fragmentos.append(fragmento)
+    
+    return fragmentos
