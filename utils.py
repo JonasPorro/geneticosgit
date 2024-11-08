@@ -184,13 +184,17 @@ def divide_text(texto, max_palabras=10):
 def save_to_csv(population, filename="creatures.csv"):
     """Guarda la información de todas las criaturas en un archivo CSV, agregando nuevas líneas con cada ejecución."""
     # Abro el archivo index para obtener el último numero único de ejecución para luego utilizarlo para almacenar los id.
-    with open("index.txt", "r") as file:
-        index = int(file.read().strip())  # Convierte el texto a un entero
-    
-    # Guardo el siguiente índice.    
-    with open("index.txt", "w") as file:
-        file.write(str(index + 1))
-    
+    index = 0
+    try:
+        with open("index.txt", "r") as file:
+            index = int(file.read().strip())  # Convierte el texto a un entero
+        # Guardo el siguiente índice.    
+        with open("index.txt", "w") as file:
+            file.write(str(index + 1))
+    except:
+        with open("index.txt", "w") as file:
+            file.write(str(0))
+            
     # Abrir el archivo en modo 'append' para agregar nuevas líneas en cada simulación.
     with open(filename, "a", newline="") as csvfile:
         fieldnames = ["id", "color", "size", "speed", "time_alive", "food_eaten_total", "reproductions", "is_carnivore", "personality"]

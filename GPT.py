@@ -32,5 +32,4 @@ def get_summary(summary):
   )
   
   cleanResponse = json.loads(response.content)
-  print(cleanResponse['choices'][0]['message']['content'])
   summary.append(cleanResponse['choices'][0]['message']['content'])

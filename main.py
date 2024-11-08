@@ -122,9 +122,6 @@ def run_simulation():
             all_creatures.extend(new_population)  # Agregar nuevas criaturas a la lista completa
             population.extend(new_population)
 
-        if len(population) <= dead_creatures:
-            print("¡Toda la población murió!")
-
         if params["save_csv"]:
             save_to_csv(all_creatures)
         
