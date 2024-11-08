@@ -1,4 +1,6 @@
 # utils.py
+import csv
+import os
 import webcolors
 
 def closest_colour(requested_colour):
@@ -178,3 +180,59 @@ def divide_text(texto, max_palabras=10):
         fragmentos.append(fragmento)
     
     return fragmentos
+
+def save_to_csv(population, filename="creatures.csv"):
+    """Guarda la información de todas las criaturas en un archivo CSV, agregando nuevas líneas con cada ejecución."""
+    # Abro el archivo index para obtener el último numero único de ejecución para luego utilizarlo para almacenar los id.
+    with open("index.txt", "r") as file:
+        index = int(file.read().strip())  # Convierte el texto a un entero
+    
+    # Guardo el siguiente índice.    
+    with open("index.txt", "w") as file:
+        file.write(str(index + 1))
+    
+    # Abrir el archivo en modo 'append' para agregar nuevas líneas en cada simulación.
+    with open(filename, "a", newline="") as csvfile:
+        fieldnames = ["id", "color", "size", "speed", "time_alive", "food_eaten_total", "reproductions", "is_carnivore", "personality"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        # Escribir el encabezado solo si el archivo está vacío
+        if os.path.getsize(filename) == 0:
+            writer.writeheader()
+        
+        # Escribir la información de las criaturas
+        for creature in population:
+            writer.writerow({
+                "id": str(index) +"_"+ str(creature.id),
+                "color": get_colour_name(creature.parent_color),
+                "size": creature.size,
+                "speed": round(creature.speed, 2),
+                "time_alive": round(creature.time_alive, 2),
+                "food_eaten_total": creature.food_eaten_total,
+                "reproductions": creature.reproductions,
+                "is_carnivore": creature.is_carnivore,
+                "personality": creature.personality
+            })
+
+def generate_tmp_csv(population, filename="creaturestmp.csv"):
+    """Guarda la información de todas las criaturas en un archivo CSV, agregando nuevas líneas con cada ejecución."""
+    # Abrir el archivo en modo 'write' para sobreescribir en cada simulación.
+    with open(filename, "w", newline="") as csvfile:
+        fieldnames = ["id", "family", "size", "speed", "time_alive", "food_eaten_total", "reproductions", "is_carnivore", "personality"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        # Escribir la información de las criaturas
+        for creature in population:
+            writer.writerow({
+                "id": creature.id,
+                "family": get_colour_name(creature.parent_color),
+                "size": creature.size,
+                "speed": round(creature.speed, 2),
+                "time_alive": round(creature.time_alive, 2),
+                "food_eaten_total": creature.food_eaten_total,
+                "reproductions": creature.reproductions,
+                "is_carnivore": creature.is_carnivore,
+                "personality": creature.personality
+            })
+    
