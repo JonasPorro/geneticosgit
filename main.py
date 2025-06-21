@@ -7,7 +7,8 @@ from creature import Creature
 from food import Food
 from ui import show_initial_screen, show_statistics, visualize_population
 from utils import generate_tmp_csv, save_to_csv
-
+from food_regime import FoodRegime
+from analysis import analyze_creature_data
 
 dead_creatures = 0
 
@@ -98,7 +99,8 @@ def run_simulation():
         global dead_creatures
         dead_creatures = 0
         stop = False
-
+        food_regime = FoodRegime()  # Initialize food regime
+        
         # Simular generación
         while (len(food_sources) > 0 or count_alive_carnivores(population) > 0) and len(population) > dead_creatures and not stop:
             for event in pygame.event.get():
@@ -108,9 +110,11 @@ def run_simulation():
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     print("Simulación detenida por el usuario.")
                     stop = True
-
+            # Update food regime stochastically
+            food_regime.update()
+            
             if pygame.time.get_ticks() - last_food_time > NEW_FOOD_INTERVAL:
-                add_food(food_sources, amount=2)
+                add_food(food_sources, amount=food_regime.get_food_amount())
                 last_food_time = pygame.time.get_ticks()
 
             simulate_generation(population, food_sources)
@@ -126,6 +130,8 @@ def run_simulation():
             save_to_csv(all_creatures)
         
         generate_tmp_csv(all_creatures)
+        # Perform stochastic analysis
+        analyze_creature_data(all_creatures)
         
         # Mostrar estadísticas de todas las criaturas
         show_statistics(screen, all_creatures)

@@ -2,7 +2,8 @@
 import random
 import time
 import math
-from config import GRID_SIZE, TIME_TO_LIVE, REPRODUCTION_THRESHOLD
+import numpy as np
+from config import MOVEMENT_KAPPA, DEATH_SHAPE, DEATH_SCALE, BASE_REPRODUCTION_RATE,GRID_SIZE, TIME_TO_LIVE, REPRODUCTION_THRESHOLD
 
 class Creature:
     unique_id = 0  # Variable de clase para asignar IDs únicos a las criaturas
@@ -27,8 +28,13 @@ class Creature:
         self.is_carnivore = is_carnivore if is_carnivore is not None else random.choice([True, False])
         self.target_x = self.x
         self.target_y = self.y
+        self.prev_x = self.x  # Track previous position
+        self.prev_y = self.y
         self.personality = personality 
-
+        self.prev_angle = None  # For correlated random walk
+        self.movement_history = []  # For analysis
+        self.event_times = []  # For analysis
+        
     def random_color(self):
         """Genera un color aleatorio para la criatura."""
         return (random.randint(50, 255), random.randint(50, 255), random.randint(50, 255))
@@ -44,11 +50,11 @@ class Creature:
             if other_creatures:
                 nearest_prey = min(other_creatures, key=lambda c: self._distance_to(c))
                 if self.personality == "egoista" or (self.personality == "conservadora" and self._evaluate_resources(food_sources, population)) or (self.personality == "neutral" and random.choice([True,False])):
-                    self.move_towards(nearest_prey.x, nearest_prey.y)
+                    self.stochastic_move_towards(nearest_prey.x, nearest_prey.y)
                 else:
-                    self.move_randomly()
+                    self.stochastic_random_move()
             else:
-                self.move_randomly()
+                self.stochastic_random_move()
         else:
             # Si no es caníbal, verifica si hay caníbales cerca para huir de ellos
             nearby_carnivores = [c for c in population if c.is_carnivore and c.alive and c.parent_color != self.parent_color]
@@ -64,22 +70,64 @@ class Creature:
                     if food_sources:
                         if self.personality == "egoista" or (self.personality == "conservadora" and self._evaluate_resources(food_sources, population)) or (self.personality == "neutral" and random.choice([True,False])):
                             nearest_food = min(food_sources, key=lambda f: self._distance_to(f))
-                            self.move_towards(nearest_food.x, nearest_food.y)
+                            self.stochastic_move_towards(nearest_food.x, nearest_food.y)
                         else:
-                            self.move_randomly()
+                            self.stochastic_random_move()
                     else:
-                        self.move_randomly()
+                        self.stochastic_random_move()
             else:
                 # Si no hay caníbales cerca, busca la comida más cercana
                 if food_sources:
                         if self.personality == "egoista" or (self.personality == "conservadora" and self._evaluate_resources(food_sources, population)) or (self.personality == "neutral" and random.choice([True,False])):
                             nearest_food = min(food_sources, key=lambda f: self._distance_to(f))
-                            self.move_towards(nearest_food.x, nearest_food.y)
+                            self.stochastic_move_towards(nearest_food.x, nearest_food.y)
                         else:
-                            self.move_randomly()
+                            self.stochastic_random_move()
                 else:
-                    self.move_randomly()
-                    
+                    self.stochastic_random_move()
+        self.movement_history.append((self.x, self.y, time.time()))
+        
+    def stochastic_move_towards(self, target_x, target_y):
+        direction = np.arctan2(target_y - self.y, target_x - self.x)
+        self._move_with_persistence(direction)
+
+    def stochastic_random_move(self):
+        random_direction = np.random.uniform(0, 2*np.pi)
+        self._move_with_persistence(random_direction)
+
+    def _move_with_persistence(self, target_direction):
+        """Robust correlated random walk implementation"""
+        # Initialize angle if first move
+        if self.prev_angle is None:
+            self.prev_angle = target_direction
+        
+        # Generate new angle with directional persistence
+        angle = np.random.vonmises(self.prev_angle, MOVEMENT_KAPPA)
+        
+        # Ensure minimum step size of at least 1 unit
+        step_size = max(1, np.random.exponential(scale=self.speed))
+        
+        # Calculate new position
+        new_x = self.x + step_size * np.cos(angle)
+        new_y = self.y + step_size * np.sin(angle)
+        
+        # Wrap around grid boundaries (alternative to clipping)
+        self.x = new_x % GRID_SIZE
+        self.y = new_y % GRID_SIZE
+        
+        # Update previous angle
+        self.prev_angle = angle
+
+        # Ensure we always move at least 1 unit (alternative approach)
+        if int(self.x) == int(self.prev_x) and int(self.y) == int(self.prev_y):
+            # Force minimal movement in random direction
+            self.x += random.choice([-1, 0, 1])
+            self.y += random.choice([-1, 0, 1])
+            self.x = self.x % GRID_SIZE
+            self.y = self.y % GRID_SIZE
+        
+        self.prev_x, self.prev_y = self.x, self.y
+         
     def _evaluate_resources(self, food_sources, population):
         """Evalúa los recursos en el entorno considerando el tipo de criatura."""
         if not self.is_carnivore:
@@ -159,8 +207,13 @@ class Creature:
         return Creature(self.parent_color, speed=self.speed, size=self.size, is_carnivore=self.is_carnivore, personality=self.personality)
 
     def update(self):
-        """Verifica si la criatura sigue viva."""
-        if time.time() - self.eat_time > TIME_TO_LIVE:
+        """Weibull survival model"""
+        if not self.alive:
+            return False
+            
+        t = time.time() - self.eat_time
+        hazard = (DEATH_SHAPE/DEATH_SCALE) * (t/DEATH_SCALE)**(DEATH_SHAPE-1)
+        if random.random() < hazard * 0.1:  # Discrete approximation
             self.alive = False
             self.death_time = time.time()
             self.time_alive = self.death_time - self.birth_time

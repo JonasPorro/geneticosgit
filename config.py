@@ -1,5 +1,16 @@
 # config.py
 import pygame
+import numpy as np
+
+# Stochastic parameters
+MOVEMENT_KAPPA = 2.0  # Directional persistence (higher = more straight)
+DEATH_SHAPE = 1.5     # Weibull shape parameter
+DEATH_SCALE = 8.0     # Weibull scale parameter
+BASE_REPRODUCTION_RATE = 0.01
+FOOD_REGIME_TRANSITIONS = [
+    [0.8, 0.2],  # Abundant state transitions
+    [0.4, 0.6]   # Scarce state transitions
+]
 
 # Parámetros generales
 GRID_SIZE = 20
