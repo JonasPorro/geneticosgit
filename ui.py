@@ -188,10 +188,10 @@ def show_statistics(screen, population):
   screen.blit(button_text, (button_restart.x + 10, button_restart.y + 10))
   
     # Botón para generar resumen con IA
-  button_summary = pygame.Rect((SCREEN_SIZE // 2 - 100, SCREEN_SIZE - 170, 250, 50))
-  pygame.draw.rect(screen, GREEN, button_summary)
-  button_text = font_large.render("Generar resumen", True, WHITE)
-  screen.blit(button_text, (button_summary.x + 10, button_summary.y + 10))
+#   button_summary = pygame.Rect((SCREEN_SIZE // 2 - 100, SCREEN_SIZE - 170, 250, 50))
+#   pygame.draw.rect(screen, GREEN, button_summary)
+#   button_text = font_large.render("Generar resumen", True, WHITE)
+#   screen.blit(button_text, (button_summary.x + 10, button_summary.y + 10))
 
   pygame.display.flip()
 
@@ -207,9 +207,9 @@ def show_statistics(screen, population):
           elif event.type == pygame.MOUSEBUTTONDOWN:
               if button_restart.collidepoint(event.pos):
                   waiting = False  # Salir del bucle para volver al menú inicial
-              elif button_summary.collidepoint(event.pos):
-                  waiting = False
-                  summary = True
+            #   elif button_summary.collidepoint(event.pos):
+            #       waiting = False
+            #       summary = True
           elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
               waiting = False
   

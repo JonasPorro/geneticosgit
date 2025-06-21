@@ -4,3 +4,5 @@
 /dist
 Simulador de sociedades.pdf
 /__pycache__
+__pycache__/GPT.cpython-311.pyc
+__pycache__/utils.cpython-311.pyc
