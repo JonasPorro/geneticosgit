@@ -28,6 +28,7 @@ class Creature:
         self.target_x = self.x
         self.target_y = self.y
         self.personality = personality 
+        self.position_hist = [(0,0)]
 
     def random_color(self):
         """Genera un color aleatorio para la criatura."""
@@ -98,10 +99,14 @@ class Creature:
                 
     def move_randomly(self):
         """Mueve la criatura de manera aleatoria."""
-        self.x += random.choice([-1, 1]) * int(self.speed)
-        self.y += random.choice([-1, 1]) * int(self.speed)
+        random_x = random.choice([-1, 0, 1])
+        random_y = random.choice([-1, 0, 1])
+        self.x += random_x * int(self.speed)
+        self.y += random_y * int(self.speed)
         self.x = max(0, min(self.x, GRID_SIZE - 1))
         self.y = max(0, min(self.y, GRID_SIZE - 1))
+        last_hist = self.position_hist[-1]
+        self.position_hist.append((last_hist[0] + random_x, last_hist[1] + random_y))
                         
     def move_away_from(self, threat_x, threat_y):
         """Mueve la criatura en dirección opuesta a una amenaza."""

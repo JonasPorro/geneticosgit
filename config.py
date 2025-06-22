@@ -11,6 +11,10 @@ GENERATIONS = 10
 CELL_SIZE = 50  # Tamaño de cada celda en la ventana gráfica
 SCREEN_SIZE = GRID_SIZE * CELL_SIZE
 NEW_FOOD_INTERVAL = 500  # 5000 ms = 5 segundos
+FOOD_REGIME_TRANSITIONS = [
+    [0.8, 0.2],  # Abundant state transitions
+    [0.6, 0.4]   # Scarce state transitions
+]
 
 # Colores
 WHITE = (255, 255, 255)

@@ -7,7 +7,8 @@ from creature import Creature
 from food import Food
 from ui import show_initial_screen, show_statistics, visualize_population
 from utils import generate_tmp_csv, save_to_csv
-
+from analysis import analyze_creature_data
+from food_regime import FoodRegime
 
 dead_creatures = 0
 
@@ -85,7 +86,7 @@ def count_alive_carnivores(population):
 def run_simulation():
     while(True):
         """Corre la simulación."""
-        params, random_carnivore = show_initial_screen()
+        params,a = show_initial_screen()
         POPULATION_SIZE = params["population_size"]
         screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
         pygame.display.set_caption("Simulación de Criaturas")
@@ -98,6 +99,7 @@ def run_simulation():
         global dead_creatures
         dead_creatures = 0
         stop = False
+        food_regime = FoodRegime()
 
         # Simular generación
         while (len(food_sources) > 0 or count_alive_carnivores(population) > 0) and len(population) > dead_creatures and not stop:
@@ -108,9 +110,11 @@ def run_simulation():
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     print("Simulación detenida por el usuario.")
                     stop = True
-
+                    
+            # Update food regime stochastically
+            food_regime.update()
             if pygame.time.get_ticks() - last_food_time > NEW_FOOD_INTERVAL:
-                add_food(food_sources, amount=2)
+                add_food(food_sources, amount=food_regime.get_food_amount())
                 last_food_time = pygame.time.get_ticks()
 
             simulate_generation(population, food_sources)
@@ -129,6 +133,7 @@ def run_simulation():
         
         # Mostrar estadísticas de todas las criaturas
         show_statistics(screen, all_creatures)
+        analyze_creature_data(all_creatures)
 
 if __name__ == "__main__":
     run_simulation()

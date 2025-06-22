@@ -1,41 +1,65 @@
 id,family,size,speed,time_alive,food_eaten_total,reproductions,is_carnivore,personality
-1,IndianRed ,28,2,9.51,3,2,True,neutral
-2,MediumOrchid,27,4,13.01,6,4,True,egoista
-3,RebeccaPurple,20,4,6.01,3,2,False,neutral
-4,BurlyWood,17,2,5.01,0,0,False,egoista
-5,SkyBlue,35,4,5.01,3,2,False,egoista
-6,DarkSlateBlue,14,3,8.01,6,4,False,conservadora
-7,Peru,35,3,8.01,3,2,False,egoista
-8,Khaki,25,4,1.0,0,0,False,egoista
-9,Moccasin,27,3,4.5,3,2,False,egoista
-10,Orchid,35,4,0.5,0,0,False,neutral
-11,RebeccaPurple,20,4,5.0,0,0,False,neutral
-12,RebeccaPurple,20,4,1.0,0,0,False,neutral
-13,Moccasin,27,3,5.0,0,0,False,egoista
-14,Moccasin,27,3,6.01,3,2,False,egoista
-15,SkyBlue,35,4,1.5,0,0,False,egoista
-16,SkyBlue,35,4,5.0,3,2,False,egoista
-17,MediumOrchid,27,4,11.51,3,2,True,egoista
-18,MediumOrchid,27,4,0.0,0,0,True,egoista
-19,Peru,35,3,3.0,0,0,False,egoista
-20,Peru,35,3,4.0,0,0,False,egoista
-21,DarkSlateBlue,14,3,5.01,0,0,False,conservadora
-22,DarkSlateBlue,14,3,4.51,0,0,False,conservadora
-23,Moccasin,27,3,3.5,0,0,False,egoista
-24,Moccasin,27,3,2.5,0,0,False,egoista
-25,DarkSlateBlue,14,3,2.5,0,0,False,conservadora
-26,DarkSlateBlue,14,3,3.0,0,0,False,conservadora
-27,MediumOrchid,27,4,7.01,3,2,True,egoista
-28,MediumOrchid,27,4,7.01,3,2,True,egoista
-29,SkyBlue,35,4,0.5,0,0,False,egoista
-30,SkyBlue,35,4,2.0,3,2,False,egoista
-31,SkyBlue,35,4,1.0,0,0,False,egoista
-32,SkyBlue,35,4,0.0,0,0,False,egoista
-33,MediumOrchid,27,4,5.0,0,0,True,egoista
-34,MediumOrchid,27,4,5.51,0,0,True,egoista
-35,MediumOrchid,27,4,5.0,0,0,True,egoista
-36,MediumOrchid,27,4,5.5,0,0,True,egoista
-37,MediumOrchid,27,4,5.5,0,0,True,egoista
-38,MediumOrchid,27,4,5.0,0,0,True,egoista
-39,IndianRed ,28,2,0.0,0,0,True,neutral
-40,IndianRed ,28,2,0.0,0,0,True,neutral
+1,IndianRed ,22,4,6.01,9,6,True,conservadora
+2,DarkSeaGreen,20,4,10.51,9,6,True,egoista
+3,Brown,29,2,1.5,3,2,True,neutral
+4,DimGrey,12,1,2.51,0,0,True,neutral
+5,LightSteelBlue,16,3,0.51,0,0,True,conservadora
+6,IndianRed ,13,1,3.01,0,0,True,egoista
+7,DarkSlateBlue,26,1,1.5,0,0,False,conservadora
+8,LimeGreen,16,4,3.01,3,2,False,neutral
+9,DarkSlateGrey,25,4,0.51,0,0,False,conservadora
+10,LightGreen,23,1,4.51,0,0,False,neutral
+11,GreenYellow,27,3,2.0,3,2,False,conservadora
+12,DeepPink,35,4,1.0,0,0,False,neutral
+13,PaleVioletRed,14,1,1.0,0,0,False,conservadora
+14,LightSkyBlue,10,4,6.01,3,2,False,egoista
+15,PaleVioletRed,18,4,0.51,0,0,False,egoista
+16,MediumPurple,22,3,2.51,0,0,False,conservadora
+17,Orchid,15,3,4.01,0,0,False,conservadora
+18,Sienna,18,4,4.01,3,2,False,conservadora
+19,CadetBlue,26,4,6.51,0,0,False,neutral
+20,Thistle,30,4,0.0,0,0,False,egoista
+21,PaleTurquoise,13,1,4.01,0,0,False,egoista
+22,LightGreen,21,3,4.51,0,0,False,conservadora
+23,Grey,33,2,5.01,3,2,False,egoista
+24,CornflowerBlue,23,4,2.51,0,0,False,conservadora
+25,DarkOliveGreen,28,2,5.01,0,0,False,egoista
+26,MediumSeaGreen,15,2,4.51,0,0,False,neutral
+27,SlateBlue,29,1,2.51,0,0,False,conservadora
+28,CadetBlue,23,4,0.0,0,0,False,conservadora
+29,PaleGoldenRod,26,3,0.0,0,0,False,conservadora
+30,Salmon,33,2,5.01,0,0,False,conservadora
+31,DarkSeaGreen,20,4,2.0,0,0,True,egoista
+32,DarkSeaGreen,20,4,4.01,6,4,True,egoista
+33,Brown,29,2,0.0,0,0,True,neutral
+34,Brown,29,2,0.0,0,0,True,neutral
+35,IndianRed ,22,4,1.5,0,0,True,conservadora
+36,IndianRed ,22,4,2.5,0,0,True,conservadora
+37,GreenYellow,27,3,0.0,0,0,False,conservadora
+38,GreenYellow,27,3,0.0,0,0,False,conservadora
+39,Grey,33,2,0.0,0,0,False,egoista
+40,Grey,33,2,2.5,3,2,False,egoista
+41,LimeGreen,16,4,2.0,0,0,False,neutral
+42,LimeGreen,16,4,0.0,0,0,False,neutral
+43,IndianRed ,22,4,1.0,0,0,True,conservadora
+44,IndianRed ,22,4,2.5,3,2,True,conservadora
+45,DarkSeaGreen,20,4,8.0,3,2,True,egoista
+46,DarkSeaGreen,20,4,6.0,0,0,True,egoista
+47,LightSkyBlue,10,4,0.0,0,0,False,egoista
+48,LightSkyBlue,10,4,0.0,0,0,False,egoista
+49,Sienna,18,4,0.0,0,0,False,conservadora
+50,Sienna,18,4,0.5,0,0,False,conservadora
+51,DarkSeaGreen,20,4,0.0,0,0,True,egoista
+52,DarkSeaGreen,20,4,2.0,0,0,True,egoista
+53,Grey,33,2,0.5,0,0,False,egoista
+54,Grey,33,2,0.0,0,0,False,egoista
+55,IndianRed ,22,4,0.0,0,0,True,conservadora
+56,IndianRed ,22,4,0.0,0,0,True,conservadora
+57,DarkSeaGreen,20,4,6.0,0,0,True,egoista
+58,DarkSeaGreen,20,4,5.0,0,0,True,egoista
+59,DarkSeaGreen,20,4,5.0,0,0,True,egoista
+60,DarkSeaGreen,20,4,5.0,0,0,True,egoista
+61,IndianRed ,22,4,0.0,0,0,True,conservadora
+62,IndianRed ,22,4,1.0,0,0,True,conservadora
+63,DarkSeaGreen,20,4,5.0,0,0,True,egoista
+64,DarkSeaGreen,20,4,5.0,0,0,True,egoista
