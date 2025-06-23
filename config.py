@@ -15,7 +15,26 @@ FOOD_REGIME_TRANSITIONS = [
     [0.8, 0.2],  # Abundant state transitions
     [0.6, 0.4]   # Scarce state transitions
 ]
-
+DEATH_SHAPE = 1.5  # Weibull shape parameter (k)
+DEATH_SCALE = 8.0  # Weibull scale parameter (λ)
+PERSONALITIES = ["egoista", "conservadora", "neutral"]
+MARKOV_TRANSITION_MATRIX = {
+    "egoista": {
+        "egoista": 0.7,
+        "conservadora": 0.1,
+        "neutral": 0.2
+    },
+    "conservadora": {
+        "egoista": 0.1,
+        "conservadora": 0.8,
+        "neutral": 0.1
+    },
+    "neutral": {
+        "egoista": 0.2,
+        "conservadora": 0.3,
+        "neutral": 0.5
+    }
+}
 # Colores
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)

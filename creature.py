@@ -2,7 +2,7 @@
 import random
 import time
 import math
-from config import GRID_SIZE, TIME_TO_LIVE, REPRODUCTION_THRESHOLD
+from config import GRID_SIZE, TIME_TO_LIVE, REPRODUCTION_THRESHOLD, DEATH_SCALE, DEATH_SHAPE,MARKOV_TRANSITION_MATRIX
 
 class Creature:
     unique_id = 0  # Variable de clase para asignar IDs únicos a las criaturas
@@ -29,6 +29,7 @@ class Creature:
         self.target_y = self.y
         self.personality = personality 
         self.position_hist = [(0,0)]
+        self.eaten = False
 
     def random_color(self):
         """Genera un color aleatorio para la criatura."""
@@ -40,28 +41,28 @@ class Creature:
             return
 
         if self.is_carnivore:
-            # Si es caníbal, busca la criatura más cercana que no sea de su familia
+            # Si es carnivora, busca la criatura más cercana que no sea de su familia
             other_creatures = [c for c in population if c.alive and c.parent_color != self.parent_color]
             if other_creatures:
                 nearest_prey = min(other_creatures, key=lambda c: self._distance_to(c))
-                if self.personality == "egoista" or (self.personality == "conservadora" and self._evaluate_resources(food_sources, population)) or (self.personality == "neutral" and random.choice([True,False])):
+                if self._distance_to(nearest_prey) < 3 and (self.personality == "egoista" or (self.personality == "conservadora" and self._evaluate_resources(food_sources, population)) or (self.personality == "neutral" and random.choice([True,False]))):
                     self.move_towards(nearest_prey.x, nearest_prey.y)
                 else:
                     self.move_randomly()
             else:
                 self.move_randomly()
         else:
-            # Si no es caníbal, verifica si hay caníbales cerca para huir de ellos
+            # Si no es carnivora, verifica si hay carnivoras cerca para huir de ellos
             nearby_carnivores = [c for c in population if c.is_carnivore and c.alive and c.parent_color != self.parent_color]
             if nearby_carnivores:
                 nearest_carnivore = min(nearby_carnivores, key=lambda c: self._distance_to(c))
                 distance_to_carnivore = self._distance_to(nearest_carnivore)
                 
-                # Si el caníbal está lo suficientemente cerca, la criatura huye en dirección opuesta
+                # Si el carnivora está lo suficientemente cerca, la criatura huye en dirección opuesta
                 if distance_to_carnivore < 5:  # Ajusta este valor según el rango de detección
                     self.move_away_from(nearest_carnivore.x, nearest_carnivore.y)
                 else:
-                    # Si no hay un caníbal cerca, busca la comida más cercana
+                    # Si no hay un carnivora cerca, busca la comida más cercana
                     if food_sources:
                         if self.personality == "egoista" or (self.personality == "conservadora" and self._evaluate_resources(food_sources, population)) or (self.personality == "neutral" and random.choice([True,False])):
                             nearest_food = min(food_sources, key=lambda f: self._distance_to(f))
@@ -71,7 +72,7 @@ class Creature:
                     else:
                         self.move_randomly()
             else:
-                # Si no hay caníbales cerca, busca la comida más cercana
+                # Si no hay carnivoras cerca, busca la comida más cercana
                 if food_sources:
                         if self.personality == "egoista" or (self.personality == "conservadora" and self._evaluate_resources(food_sources, population)) or (self.personality == "neutral" and random.choice([True,False])):
                             nearest_food = min(food_sources, key=lambda f: self._distance_to(f))
@@ -151,6 +152,7 @@ class Creature:
         prey.alive = False
         prey.death_time = time.time()
         prey.time_alive = prey.death_time - prey.birth_time
+        prey.eaten = True # Para análisis de muerte por inanición.
 
     def can_reproduce(self):
         """Verifica si la criatura puede reproducirse."""
@@ -162,10 +164,24 @@ class Creature:
         self.food_eaten_total += self.food_eaten
         self.food_eaten = 0
         return Creature(self.parent_color, speed=self.speed, size=self.size, is_carnivore=self.is_carnivore, personality=self.personality)
+    
+    def next_personality(self,current):
+        probs = MARKOV_TRANSITION_MATRIX[current]
+        choices, weights = zip(*probs.items())
+        return random.choices(choices, weights=weights, k=1)[0]
+    
+    def update_personality(self):
+        self.personality = self.next_personality(self.personality)
 
     def update(self):
         """Verifica si la criatura sigue viva."""
-        if time.time() - self.eat_time > TIME_TO_LIVE:
+        if not self.alive: 
+            return False
+        
+        # Weibull survival probability
+        t = time.time() - self.eat_time
+        hazard = (DEATH_SHAPE/DEATH_SCALE) * (t/DEATH_SCALE)**(DEATH_SHAPE-1)
+        if random.random() < hazard * 0.5:  # Discrete approximation
             self.alive = False
             self.death_time = time.time()
             self.time_alive = self.death_time - self.birth_time

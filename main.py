@@ -7,7 +7,7 @@ from creature import Creature
 from food import Food
 from ui import show_initial_screen, show_statistics, visualize_population
 from utils import generate_tmp_csv, save_to_csv
-from analysis import analyze_creature_data
+from analysis import analyze_creature_data, analyze_food_supply, analyze_starvation
 from food_regime import FoodRegime
 
 dead_creatures = 0
@@ -65,6 +65,8 @@ def simulate_generation(population, food_sources):
                     break
         if creature.update(): # Si la criatura en cuestión murió (update retornó True) aumento el contador.
             dead_creatures += 1
+        else:
+            creature.update_personality()
         
 def reproduce(population):
     """Selecciona criaturas para reproducirse y crear la próxima generación."""
@@ -100,6 +102,7 @@ def run_simulation():
         dead_creatures = 0
         stop = False
         food_regime = FoodRegime()
+        food_adding_hist = []
 
         # Simular generación
         while (len(food_sources) > 0 or count_alive_carnivores(population) > 0) and len(population) > dead_creatures and not stop:
@@ -114,7 +117,9 @@ def run_simulation():
             # Update food regime stochastically
             food_regime.update()
             if pygame.time.get_ticks() - last_food_time > NEW_FOOD_INTERVAL:
-                add_food(food_sources, amount=food_regime.get_food_amount())
+                food_amount = food_regime.get_food_amount()
+                add_food(food_sources, amount=food_amount)
+                food_adding_hist.append(food_amount)
                 last_food_time = pygame.time.get_ticks()
 
             simulate_generation(population, food_sources)
@@ -133,7 +138,11 @@ def run_simulation():
         
         # Mostrar estadísticas de todas las criaturas
         show_statistics(screen, all_creatures)
+        
+        # Análisis estocástico
         analyze_creature_data(all_creatures)
+        analyze_food_supply(food_adding_hist)
+        analyze_starvation(all_creatures)
 
 if __name__ == "__main__":
     run_simulation()
